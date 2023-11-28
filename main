@@ -1,0 +1,144 @@
+from pywinauto import Application
+import time
+import pyautogui
+from pynput.keyboard import Key, Controller
+import tkinter as tk
+import pickle
+
+# 定义一个微信类
+class WeChat:
+    # 初始化方法，设置微信的路径和启动应用
+    def __init__(self, path):
+        self.path = path
+        self.app = Application()
+        self.app.start(path)
+
+    # 定义一个查找用户的方法，输入用户的昵称，点击搜索框，输入昵称，按回车键
+    def find_user(self, name):
+        self.name = name
+        try:
+            # 尝试查找搜索框的位置
+            help_pos = pyautogui.locateOnScreen('seek.png')
+            goto_pos = pyautogui.center(help_pos)
+            pyautogui.moveTo(goto_pos, duration=1)
+            pyautogui.click(button='left')
+            keyboard = Controller()
+            keyboard.type(name)
+            keyboard.press(Key.enter)
+            keyboard.release(Key.enter)
+            time.sleep(1)
+        except Exception as e:
+            # 捕获异常并打印错误信息
+            print(f"找不到用户界面，原因是 {e}")
+            # 退出程序
+            exit(1)
+
+    # 定义一个发送消息的方法，输入消息内容和重复次数，移动鼠标到聊天框，点击鼠标，输入内容，按回车键
+    def send_message(self, content, times):
+        self.content = content
+        self.times = times
+        pyautogui.moveRel(0, 90, duration=0.5)
+        pyautogui.click(button='left')
+        time.sleep(1)
+        keyboard = Controller()
+        for i in range(times):
+            keyboard.type(content)
+            keyboard.press(Key.enter)
+            keyboard.release(Key.enter)
+            time.sleep(0.1)
+        print("发送成功")
+
+# 定义一个tkinter窗口类
+class TkWindow:
+    # 初始化方法，创建窗口，标签，输入框，按钮等组件
+    def __init__(self, master):
+        self.master = master
+        self.master.title("微信自动发送消息")
+        self.master.geometry("400x300")
+        self.master.resizable(0, 0)
+        self.label1 = tk.Label(self.master, text="请输入你要发送的用户（多个用户用逗号分隔）：")
+        self.label1.pack()
+        self.entry1 = tk.Entry(self.master, width=40)
+        self.entry1.pack()
+        self.label2 = tk.Label(self.master, text="请输入你要重复的内容：")
+        self.label2.pack()
+        self.entry2 = tk.Entry(self.master, width=40)
+        self.entry2.pack()
+        self.label3 = tk.Label(self.master, text="请输入你要重复的次数：")
+        self.label3.pack()
+        self.entry3 = tk.Entry(self.master, width=40)
+        self.entry3.pack()
+        self.button = tk.Button(self.master, text="开始发送", command=self.start_send)
+        self.button.pack()
+        self.label4 = tk.Label(self.master, text="")
+        self.label4.pack()
+        self.load_data()
+
+    # 定义一个加载数据的方法，从文件中读取上次输入的信息，并显示在输入框中
+    def load_data(self):
+        try:
+            # 尝试打开文件
+            with open("data.pkl", "rb") as f:
+                # 读取文件内容
+                data = pickle.load(f)
+                # 显示在输入框中
+                self.entry1.insert(0, data["user_name"])
+                self.entry2.insert(0, data["message_content"])
+                self.entry3.insert(0, data["message_times"])
+        except Exception as e:
+            # 捕获异常并打印错误信息
+            print(f"加载数据失败，原因是 {e}")
+
+    # 定义一个保存数据的方法，把输入的信息写入文件中，以便下次使用
+    def save_data(self):
+        # 获取输入框的值
+        user_name = self.entry1.get()
+        message_content = self.entry2.get()
+        message_times = self.entry3.get()
+        # 创建一个字典
+        data = {
+            "user_name": user_name,
+            "message_content": message_content,
+            "message_times": message_times
+        }
+        try:
+            # 尝试打开文件
+            with open("data.pkl", "wb") as f:
+                # 写入文件内容
+                pickle.dump(data, f)
+        except Exception as e:
+            # 捕获异常并打印错误信息
+            print(f"保存数据失败，原因是 {e}")
+            print(f"保存数据失败，原因是 {e}")
+
+    # 定义一个开始发送的方法，获取输入的信息，创建微信对象，调用微信对象的方法，循环发送消息
+    def start_send(self):
+        # 获取输入框的值
+        user_name = self.entry1.get()
+        message_content = self.entry2.get()
+        message_times = int(self.entry3.get())
+        # 判断输入是否为空
+        if not user_name or not message_content or not message_times:
+            # 显示错误信息
+            self.label4.config(text="请输入完整的信息！", fg="red")
+            return
+        # 保存数据
+        self.save_data()
+        # 创建一个微信对象，传入微信的路径
+        wechat = WeChat("D:\Program Files (x86)\Tencent\WeChat\WeChat.exe")
+        # 切割用户字符串，得到用户列表
+        user_list = user_name.split(",")
+        # 循环遍历用户列表
+        for user in user_list:
+            # 调用微信对象的方法，传入用户，内容和次数
+            wechat.find_user(user)
+            wechat.send_message(message_content, message_times)
+        # 显示成功信息
+        self.label4.config(text="发送成功！", fg="green")
+
+# 创建一个tkinter窗口对象
+root = tk.Tk()
+# 创建一个tkinter窗口类对象
+window = TkWindow(root)
+# 进入主循环
+root.mainloop()
