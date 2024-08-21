@@ -4,6 +4,7 @@ import pyautogui
 from pynput.keyboard import Key, Controller
 import tkinter as tk
 import pickle
+from test import find_image_on_screen
 
 # 定义一个微信类
 class WeChat:
@@ -17,16 +18,15 @@ class WeChat:
     def find_user(self, name):
         self.name = name
         try:
-            # 尝试查找搜索框的位置
-            help_pos = pyautogui.locateOnScreen('seek.png')
-            goto_pos = pyautogui.center(help_pos)
-            pyautogui.moveTo(goto_pos, duration=1)
+            time.sleep(2)
+            x,y=find_image_on_screen('seek.bmp')
+            pyautogui.moveTo(x,y, duration=1)
             pyautogui.click(button='left')
             keyboard = Controller()
             keyboard.type(name)
             keyboard.press(Key.enter)
             keyboard.release(Key.enter)
-            time.sleep(1)
+            time.sleep(2)
         except Exception as e:
             # 捕获异常并打印错误信息
             print(f"找不到用户界面，原因是 {e}")
@@ -125,7 +125,7 @@ class TkWindow:
         # 保存数据
         self.save_data()
         # 创建一个微信对象，传入微信的路径
-        wechat = WeChat("D:\Program Files (x86)\Tencent\WeChat\WeChat.exe")
+        wechat = WeChat("C:\Program Files\Tencent\WeChat\WeChat.exe")
         # 切割用户字符串，得到用户列表
         user_list = user_name.split(",")
         # 循环遍历用户列表
